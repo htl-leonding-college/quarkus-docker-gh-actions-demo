@@ -235,10 +235,11 @@ docker run -i --rm -p 8080:8080 htl-leonding/vehicle
 ** docker pull adminer:4.8.0
 ** docker pull postgres:13.2
 
-* https://docs.docker.com/compose/compose-file/compose-versioning/[docker-compose versions]
-* https://github.com/docker/awesome-compose[awesome-compose, a curated list of docker-compose examples, window="_blank"]
-* https://github.com/lreimer/hands-on-quarkus/blob/master/docker-compose.yml
-
+* Sources:
+** https://docs.docker.com/compose/compose-file/compose-versioning/[docker-compose versions]
+** https://github.com/docker/awesome-compose[awesome-compose, a curated list of docker-compose examples, window="_blank"]
+** https://github.com/lreimer/hands-on-quarkus/blob/master/docker-compose.yml
+** http://heidloff.net/article/multistage-dockerfiles-for-quarkus/[Multistage Dockerfiles for Quarkus, window="_blank"]
 
 
 
