@@ -15,17 +15,17 @@ ifndef::imagesdir[:imagesdir: images]
 ifdef::backend-html5[]
 
 // https://fontawesome.com/v4.7.0/icons/
-icon:file-text-o[link=https://raw.githubusercontent.com/htl-leonding-college/security-lecture-notes/master/asciidocs/{docname}.adoc] ‏ ‏ ‎
-icon:github-square[link=https://github.com/htl-leonding-college/security-lecture-notes] ‏ ‏ ‎
-icon:home[link=http://edufs.edu.htl-leonding.ac.at/~t.stuetz/hugo/]
+icon:file-text-o[link=https://raw.githubusercontent.com/htl-leonding-college/quarkus-docker-gh-actions-demo/master/asciidocs/index.adoc] ‏ ‏ ‎
+icon:github-square[link=https://github.com/htl-leonding-college/quarkus-docker-gh-actions-demo] ‏ ‏ ‎
+icon:home[link=https://htl-leonding-college.github.io/quarkus-docker-gh-actions-demo/]
 endif::backend-html5[]
 
 // print the toc here (not at the default position)
 //toc::[]
 
-== Erstellen der Quarkus Application
+== Create a Quarkus Application
 
-=== Generieren des Projekts
+=== Create the Project
 
 * Vorab unter https://quarkus.io/ die neueste Quarkus-Version abrufen und ggf. unten eintragen
 
@@ -39,17 +39,17 @@ mvn io.quarkus:quarkus-maven-plugin:1.12.2.Final:create -e \
     -Dextensions="resteasy, resteasy-jsonb, smallrye-openapi"
 ----
 
-=== Starten des Projects
+=== First Run of the Project
 
-.Terminal öffnen
+.open a terminal
 [source,bash]
 ----
 ./mvnw clean compile quarkus:dev
 ----
 
-=== Testen des Projects
+=== Manually Check of the Running Project
 
-.Neues Terminal öffnen
+.open another terminal
 [source,bash]
 ----
 curl http://localhost:8080/vehicle
@@ -60,14 +60,24 @@ curl http://localhost:8080/vehicle
 Hello RESTEasy
 ----
 
-=== Build des Projects
+=== Build a jar-File
 
-.build a fast-jar
+.build a jar-file (package)
 ----
 ./mvnw clean package
 ----
 
+.result -> ls -lh ./target
+----
+-rw-r--r--   1 stuetz  staff   5.4K Mar 14 12:08 quarkus-docker-gh-actions-demo-0.1.0-SNAPSHOT.jar
+----
 
+* the name of the jar-file is not a telling name
+* -> we will rename the jar-file
+
+=== Rename the jar-File
+
+.rename the project into vehicle w/ version#
 [source,xml]
 ----
 ...
@@ -77,12 +87,161 @@ Hello RESTEasy
     ...
 ----
 
+* There is also a property https://quarkus.io/guides/all-config#quarkus-core_quarkus.package.output-name[quarkus.package.output-name]
+
+
+.build a jar-file (package)
+----
+./mvnw clean package
+----
+
+It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
+Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+
+.result
+----
+-rw-r--r--  1 stuetz  staff   5.4K Mar 14 12:15 vehicle-0.1.0-SNAPSHOT.jar
+----
+
+.run the app
+----
+java -jar target/vehicle-0.1.0-SNAPSHOT.jar
+----
+
+.result
+----
+no main manifest attribute, in target/vehicle-0.1.0-SNAPSHOT.jar
+----
+
+.but there is also
+----
+tree target/quarkus-app
+
+target/quarkus-app
+|-- app
+|   `-- vehicle-0.1.0-SNAPSHOT.jar
+|-- lib
+|   |-- boot
+|   |   |-- io.quarkus.quarkus-bootstrap-runner-1.12.2.Final.jar
+|   |   |-- ...
+|   `-- main
+|       |-- com.fasterxml.jackson.core.jackson-annotations-2.12.1.jar
+|       |-- ...
+|-- quarkus
+|   |-- generated-bytecode.jar
+|   `-- quarkus-application.dat
+`-- quarkus-run.jar
+----
+
+.run the app
+----
+java -jar target/quarkus-app/quarkus-run.jar
+----
+
+* the libraries are in the lib-folder available
+
+=== Choose a Packaging Format
+
+* there are several aspects to pay attention:
+** fast-jar or legacy-jar [https://www.heise.de/news/Java-Framework-Quarkus-1-12-erhebt-Fast-jar-zum-Standard-5064039.html[heise, window="_blank"]]
+** create a uber-jar or deliver the quarkus-app-folder
+
 
 * What is a uber-jar?
 ** Über is the German word for above or over (it's actually cognate with the English over).
 Hence, in this context, an uber-jar is an "over-jar", one level up from a simple JAR (a), defined as one that contains both your package and all its dependencies in one single JAR file. The name can be thought to come from the same stable as ultrageek, superman, hyperspace, and metadata, which all have similar meanings of "beyond the normal".
 ** uber-jar is also known as fat jar i.e. jar with dependencies.
 There are three common methods for constructing an uber jar (https://stackoverflow.com/a/39030649[stackoverflow, window="_blank"]):
-. *Unshaded*: Unpack all JAR files, then repack them into a single JAR. Works with Java's default class loader. Tools maven-assembly-plugin
-. *Shaded*: Same as unshaded, but rename (i.e., "shade") all packages of all dependencies. Works with Java's default class loader. Avoids some (not all) dependency version clashes. Tools maven-shade-plugin
-. *JAR of JARs*: The final JAR file contains the other JAR files embedded within. Avoids dependency version clashes. All resource files are preserved. Tools: Eclipse JAR File Exporter
+. *Unshaded*: Unpack all JAR files, then repack them into a single JAR. Works with Java's default class loader. Tools *maven-assembly-plugin*
+. *Shaded*: Same as unshaded, but rename (i.e., "shade") all packages of all dependencies. Works with Java's default class loader. Avoids some (not all) dependency version clashes. Tools *maven-shade-plugin*
+. *JAR of JARs*: The final JAR file contains the other JAR files embedded within. Avoids dependency version clashes. All resource files are preserved. Tools: *Eclipse JAR File Exporter*
+
+==== How to change the package type?
+
+* You have to change the https://quarkus.io/guides/all-config#quarkus-core_quarkus.package.type[quarkus.package.type]-property
+* options:
+** jar -> fast-jar
+** legacy-jar
+** uber-jar
+** native
+* Where can you change the property?
+** application.properties
++
+----
+quarkus.package.type=uber-jar
+----
+** pom.xml
++
+[source,xml]
+----
+<properties>
+  <quarkus.package.type>uber-jar</quarkus.package.type>
+</properties>
+----
+** as maven-parameter
++
+----
+./mvnw clean package -Dquarkus.package.type=uber-jar
+----
+
+.result
+----
+-rw-r--r--   1 stuetz  staff    14M Mar 14 12:35 vehicle-0.1.0-SNAPSHOT-runner.jar #<.>
+-rw-r--r--   1 stuetz  staff   5.4K Mar 14 12:35 vehicle-0.1.0-SNAPSHOT.jar.original
+----
+
+<.> the -runner - file includes all necessary libraries for running the quarkus app
+
+
+=== Run the jar-File
+
+----
+java -jar ./target/vehicle-0.1.0-SNAPSHOT-runner.jar
+----
+
+=== Check the Running App manually
+
+----
+curl http://localhost:8080/vehicle
+----
+
+.result
+----
+Hello RESTEasy
+----
+
+== Run in Docker
+
+[source,bash]
+----
+./mvnw clean package
+----
+
+[source,sh]
+----
+docker build -f src/main/docker/Dockerfile.jvm -t htl-leonding/vehicle .
+----
+
+https://catalog.redhat.com/software/containers/search?p=1&q=ubi[Red Hat container images, window="_blank"]
+
+[source,shell]
+----
+docker run -i --rm -p 8080:8080 htl-leonding/vehicle
+----
+
+== Run in docker-compose
+
+* Maybe you will download all docker-images
+** docker pull adminer:4.8.0
+** docker pull postgres:13.2
+
+* https://docs.docker.com/compose/compose-file/compose-versioning/[docker-compose versions]
+* https://github.com/docker/awesome-compose[awesome-compose, a curated list of docker-compose examples, window="_blank"]
+* https://github.com/lreimer/hands-on-quarkus/blob/master/docker-compose.yml
+
+
+
+
+== Create a github-actions Pipeline
+
+
