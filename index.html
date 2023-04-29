@@ -609,18 +609,26 @@ pre.rouge .hll * {
 <div class="ulist">
 <ul>
 <li>
-<p>Vorab unter <a href="https://quarkus.io/" class="bare">https://quarkus.io/</a> die neueste Quarkus-Version abrufen und ggf. unten eintragen</p>
+<p>Configure on <a href="https://code.quarkus.io/?g=ast.htlleonding.vehicle&amp;a=vehicle-demo&amp;e=resteasy-reactive&amp;e=resteasy-reactive-jackson&amp;e=smallrye-openapi&amp;e=jdbc-postgresql&amp;e=hibernate-orm-panache&amp;extension-search=origin:platform%20panache" target="_blank" rel="noopener">quarkus.io</a> and download as zip or push to github</p>
+</li>
+<li>
+<p>Alternatively create the project per maven</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Check the newest quarkus version <a href="https://quarkus.io/" class="bare">https://quarkus.io/</a></p>
+</li>
+</ul>
+</div>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="bash">mvn io.quarkus:quarkus-maven-plugin:1.12.2.Final:create <span class="nt">-e</span> <span class="se">\</span>
-    <span class="nt">-DprojectGroupId</span><span class="o">=</span>at.htl.vehicle <span class="se">\</span>
-    <span class="nt">-DprojectArtifactId</span><span class="o">=</span>quarkus-docker-gh-actions-demo <span class="se">\</span>
-    <span class="nt">-DclassName</span><span class="o">=</span><span class="s2">"at.htl.vehicle.boundary.VehicleEndpoint"</span> <span class="se">\</span>
-    <span class="nt">-Dpath</span><span class="o">=</span><span class="s2">"/vehicle"</span> <span class="se">\</span>
-    <span class="nt">-Dextensions</span><span class="o">=</span><span class="s2">"resteasy, resteasy-jsonb, smallrye-openapi"</span></code></pre>
+<pre class="rouge highlight"><code data-lang="bash">mvn io.quarkus.platform:quarkus-maven-plugin:3.0.1.Final:create <span class="se">\</span>
+    <span class="nt">-DprojectGroupId</span><span class="o">=</span>at.htlleonding.vehicle <span class="se">\</span>
+    <span class="nt">-DprojectArtifactId</span><span class="o">=</span>vehicle-demo <span class="se">\</span>
+    <span class="nt">-Dextensions</span><span class="o">=</span><span class="s2">"resteasy-reactive, resteasy-reactive-jackson, smallrye-openapi, jdbc-postgresql, hibernate-orm-panache"</span></code></pre>
 </div>
 </div>
 </div>
@@ -678,17 +686,19 @@ pre.rouge .hll * {
 <div class="listingblock">
 <div class="title">rename the project into vehicle w/ version#</div>
 <div class="content">
-<pre class="rouge highlight"><code data-lang="xml">...
+<pre class="rouge highlight"><code data-lang="xml">//...
 <span class="nt">&lt;build&gt;</span>
   <span class="nt">&lt;finalName&gt;</span>vehicle-${version}<span class="nt">&lt;/finalName&gt;</span>
   <span class="nt">&lt;plugins&gt;</span>
-    ...</code></pre>
+    //...
+  <span class="nt">&lt;/plugins&gt;</span>
+<span class="nt">&lt;/build&gt;</span></code></pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>There is also a property <a href="https://quarkus.io/guides/all-config#quarkus-core_quarkus.package.output-name">quarkus.package.output-name</a></p>
+<p>There is also a property <a href="https://quarkus.io/guides/all-config#quarkus-core_quarkus.package.output-name" target="_blank" rel="noopener">quarkus.package.output-name</a></p>
 </li>
 </ul>
 </div>
@@ -700,24 +710,29 @@ pre.rouge .hll * {
 </div>
 <div class="paragraph">
 <p>It produces the <code>quarkus-run.jar</code> file in the <code>target/quarkus-app/</code> directory.
-Be aware that it’s not an <em>über-jar</em> as the dependencies are copied into the <code>target/quarkus-app/lib/</code> directory.</p>
+Be aware that it’s not an <em>uber-jar</em> as the dependencies are copied into the <code>target/quarkus-app/lib/</code> directory.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>ls -l target</pre>
+</div>
 </div>
 <div class="listingblock">
 <div class="title">result</div>
 <div class="content">
-<pre>-rw-r--r--  1 stuetz  staff   5.4K Mar 14 12:15 vehicle-0.1.0-SNAPSHOT.jar</pre>
+<pre>-rw-r--r--  1 stuetz  staff  180323 Apr 29 11:56 vehicle-1.0.0-SNAPSHOT.jar</pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">run the app</div>
 <div class="content">
-<pre>java -jar target/vehicle-0.1.0-SNAPSHOT.jar</pre>
+<pre>java -jar target/vehicle-1.0.0-SNAPSHOT.jar</pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">result</div>
 <div class="content">
-<pre>no main manifest attribute, in target/vehicle-0.1.0-SNAPSHOT.jar</pre>
+<pre>no main manifest attribute, in target/vehicle-1.0.0-SNAPSHOT.jar</pre>
 </div>
 </div>
 <div class="listingblock">
@@ -730,15 +745,17 @@ target/quarkus-app
 |   `-- vehicle-0.1.0-SNAPSHOT.jar
 |-- lib
 |   |-- boot
-|   |   |-- io.quarkus.quarkus-bootstrap-runner-1.12.2.Final.jar
+|   |   |-- io.quarkus.quarkus-bootstrap-runner-3.0.1.Final.jar
 |   |   |-- ...
 |   `-- main
-|       |-- com.fasterxml.jackson.core.jackson-annotations-2.12.1.jar
+|       |-- com.fasterxml.jackson.core.jackson-annotations-2.14.2.jar
 |       |-- ...
-|-- quarkus
-|   |-- generated-bytecode.jar
-|   `-- quarkus-application.dat
-`-- quarkus-run.jar</pre>
+├── quarkus
+│   ├── generated-bytecode.jar
+│   ├── quarkus-application.dat
+│   └── transformed-bytecode.jar
+├── quarkus-app-dependencies.txt
+└── quarkus-run.jar</pre>
 </div>
 </div>
 <div class="listingblock">
@@ -978,7 +995,7 @@ There are three common methods for constructing an uber jar (<a href="https://st
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0<br>
-Last updated 2023-04-29 09:25:19 UTC
+Last updated 2023-04-29 10:03:05 UTC
 </div>
 </div>
 </body>
