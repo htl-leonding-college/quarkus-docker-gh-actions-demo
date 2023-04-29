@@ -384,6 +384,269 @@ docker run --rm -p 8080:8080 htl-leonding/vehicle
 image::intellij-rest-client.png[]
 ====
 
+== Run local docker-compose
+
+* Now we have the docker image locally.
+
+=== Create docker-compose.yaml
+
+* We need a `docker-compose.yaml` - file
+
+[source,yaml]
+----
+services:
+  backend:
+    image: htl-leonding/vehicle:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - vehicle
+
+networks:
+  vehicle:
+    name: quarkus-vehicle-network
+----
+
+
+=== Start docker-compose
+
+----
+docker compose up -d
+----
+
+image::intellij-services-docker.png[]
+
+.Use the REST-client for checking if the app works.
+[%collapsible]
+====
+image::intellij-rest-client.png[]
+====
+
+=== Stop docker-compose
+
+----
+docker compose down
+----
+
+
+== Run a local docker-compose with Database
+
+=== Add Dependencies for the database
+
+----
+./mvnw quarkus:add-extension -Dextensions='jdbc-postgresql, hibernate-orm-panache'
+----
+
+=== Add code for accessing database
+
+
+.Vehicle.java
+[%collapsible]
+====
+[source,java]
+----
+package at.htlleonding.vehicle;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class Vehicle {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private
+    Long id;
+
+    private String brand;
+    private String model;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s", brand, model);
+    }
+}
+----
+====
+
+
+.VehicleDto.java
+[%collapsible]
+====
+[source,java]
+----
+package at.htlleonding.vehicle;
+
+public record VehicleDto (Long id, String brand, String model) {}
+----
+====
+
+
+.VehicleRepository.java
+[%collapsible]
+====
+[source,java]
+----
+package at.htlleonding.vehicle;
+
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class VehicleRepository implements PanacheRepository<Vehicle> {
+}
+----
+====
+
+
+.VehicleResource.java
+[%collapsible]
+====
+[source,java]
+----
+package at.htlleonding.vehicle;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
+import java.util.List;
+
+@Path("/vehicle")
+public class VehicleResource {
+
+    @Inject
+    VehicleRepository vehicleRepository;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Vehicle> listAll() {
+        return vehicleRepository.listAll();
+    }
+}
+----
+====
+
+
+.http-requests/requests.http
+[%collapsible]
+====
+----
+GET http://localhost:8080/hello
+
+###
+
+GET http://localhost:8080/vehicle
+
+####
+----
+====
+
+
+.src/main/resources/application.properties
+[%collapsible]
+====
+[source,sql]
+----
+insert into vehicle (brand, model) values ('Opel', 'Kadett');
+insert into vehicle (brand, model) values ('VW', 'Käfer');
+----
+====
+
+
+.add assertj-core to dependencies in pom.xml
+[%collapsible]
+====
+[source,xml]
+----
+  <dependencies>
+    ...
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.24.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+----
+====
+
+
+
+
+
+.src/main/test/java/at/htlleonding/vehicle/VehicleResourceTest.java
+[%collapsible]
+====
+[source,java]
+----
+package at.htlleonding.vehicle;
+
+import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Test;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import static io.restassured.RestAssured.given;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@QuarkusTest
+public class VehicleResourceTest {
+
+    @Test
+    public void testHelloEndpoint() {
+
+        List<VehicleDto> expectedVehicles = List.of(
+                new VehicleDto(2L, "VW", "Käfer"),
+                new VehicleDto(1L, "Opel", "Kadett")
+        );
+
+        List<VehicleDto> retrievedVehicles = new LinkedList<>();
+        retrievedVehicles = given()
+                .when().get("/vehicle")
+                .then()
+                .statusCode(200)
+                .extract().body().jsonPath().getList(".", VehicleDto.class);
+
+        assertThat(retrievedVehicles).hasSize(2)
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .ignoringCollectionOrder()
+                .isEqualTo(expectedVehicles);
+    }
+
+}
+----
+====
 
 
 
@@ -392,6 +655,8 @@ image::intellij-rest-client.png[]
 
 
 
+
+////
 
 
 === Choose a Packaging Format
@@ -503,3 +768,4 @@ docker run -i --rm -p 8080:8080 htl-leonding/vehicle
 == Create a github-actions Pipeline
 
 
+////
