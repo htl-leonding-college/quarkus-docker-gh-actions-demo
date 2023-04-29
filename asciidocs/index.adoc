@@ -23,13 +23,15 @@ endif::backend-html5[]
 // print the toc here (not at the default position)
 //toc::[]
 
-== Create a Quarkus Application
+== Create a Simple Quarkus Application
 
 === Create the Project
 
-* Configure on https://code.quarkus.io/?g=ast.htlleonding.vehicle&a=vehicle-demo&e=resteasy-reactive&e=resteasy-reactive-jackson&e=smallrye-openapi&e=jdbc-postgresql&e=hibernate-orm-panache&extension-search=origin:platform%20panache[quarkus.io^] and download as zip or push to github
+* Configure on https://code.quarkus.io/?g=ast.htlleonding.vehicle&a=vehicle-demo&e=resteasy-reactive&e=resteasy-reactive-jackson&e=smallrye-openapi&extension-search=origin:platform%20panache[quarkus.io^] and download as zip or push to github
 
 * Alternatively create the project per maven
+
+IMPORTANT: You have to install maven before
 
 ** Check the newest quarkus version https://quarkus.io/
 
@@ -38,7 +40,7 @@ endif::backend-html5[]
 mvn io.quarkus.platform:quarkus-maven-plugin:3.0.1.Final:create \
     -DprojectGroupId=at.htlleonding.vehicle \
     -DprojectArtifactId=vehicle-demo \
-    -Dextensions="resteasy-reactive, resteasy-reactive-jackson, smallrye-openapi, jdbc-postgresql, hibernate-orm-panache"
+    -Dextensions="resteasy-reactive, resteasy-reactive-jackson, smallrye-openapi"
 ----
 
 === First Run of the Project
@@ -46,35 +48,55 @@ mvn io.quarkus.platform:quarkus-maven-plugin:3.0.1.Final:create \
 .open a terminal
 [source,bash]
 ----
-./mvnw clean compile quarkus:dev
+./mvnw clean quarkus:dev
 ----
 
 === Manually Check of the Running Project
 
+==== Curl
+
 .open another terminal
 [source,bash]
 ----
-curl http://localhost:8080/vehicle
+curl http://localhost:8080/hello
 ----
 
 .output
 ----
-Hello RESTEasy
+Hello from RESTEasy Reactive
 ----
+
+==== Intellij Rest Client
+
+* You can also use the intellij rest client:
+
+image::intellij-rest-client.png[]
+
+<1> Create folder `http-requests` and create (text-)file `requests.http`.
+<2> Write request
++
+----
+GET http://localhost:8080/hello
+
+###
+----
+<3> Run request
+<4> In the Service-window the output is shown
 
 === Build a jar-File
 
 .build a jar-file (package)
 ----
 ./mvnw clean package
+ls -lh ./target
 ----
 
-.result -> ls -lh ./target
+.result
 ----
 -rw-r--r--   1 stuetz  staff   5.4K Mar 14 12:08 quarkus-docker-gh-actions-demo-0.1.0-SNAPSHOT.jar
 ----
 
-* the name of the jar-file is not a telling name
+* we want to rename the jar-file to get rid of `demo.`
 * -> we will rename the jar-file
 
 === Rename the jar-File
@@ -96,7 +118,7 @@ Hello RESTEasy
 
 .build a jar-file (package)
 ----
-./mvnw clean package
+./mvnw clean package -DskipTests
 ----
 
 It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
@@ -108,7 +130,7 @@ ls -l target
 
 .result
 ----
--rw-r--r--  1 stuetz  staff  180323 Apr 29 11:56 vehicle-1.0.0-SNAPSHOT.jar
+-rw-r--r--  1 stuetz  staff   173K Apr 29 13:30 vehicle-1.0.0-SNAPSHOT.jar
 ----
 
 .run the app
@@ -126,15 +148,17 @@ no main manifest attribute, in target/vehicle-1.0.0-SNAPSHOT.jar
 tree target/quarkus-app
 
 target/quarkus-app
-|-- app
-|   `-- vehicle-0.1.0-SNAPSHOT.jar
-|-- lib
-|   |-- boot
-|   |   |-- io.quarkus.quarkus-bootstrap-runner-3.0.1.Final.jar
-|   |   |-- ...
-|   `-- main
-|       |-- com.fasterxml.jackson.core.jackson-annotations-2.14.2.jar
-|       |-- ...
+├── app
+│     └── vehicle-1.0.0-SNAPSHOT.jar
+├── lib
+│     ├── boot
+│     │     ├── ...
+│     │     ├── io.quarkus.quarkus-bootstrap-runner-3.0.1.Final.jar
+│     │     └── ...
+│     └── main
+│         ├── ...
+│         ├── com.fasterxml.jackson.core.jackson-annotations-2.14.2.jar
+│         └── ...
 ├── quarkus
 │   ├── generated-bytecode.jar
 │   ├── quarkus-application.dat
@@ -150,15 +174,235 @@ java -jar target/quarkus-app/quarkus-run.jar
 
 * the libraries are in the lib-folder available
 
+
+== Run a local Docker Container
+
+* To dockerize the quarkus application into a docker image, there are several options available:
+** Usage of a Dockerfile
+** Using a library (i.e. jib) to build an image
+
+=== Using a Dockerfile
+
+* When creating a quarkus project, you get pre-configured Dockerfiles
+
+* Please notice:
+** It is possible to package the quarkus app with all dependent libraries. This is called an uber-jar.
+** But it is more performant to create a layer for the libraries and a layer for the quarkus app. So it is very fast, when you only have changes in the quarkus app. Only a very small layer would be created after the code changes.
+** so the pre-configured Dockerfiles in `src/main/docker` the layers
+
+//--
+
+==== Create the jar-file
+
+----
+./mvnw clean package
+----
+
+.result
+----
+-rw-r--r--  1 stuetz  staff   173K Apr 29 13:42 vehicle-1.0.0-SNAPSHOT.jar
+----
+
+==== Create the Docker Image
+
+----
+docker build -f src/main/Docker/Dockerfile.jvm -t htl-leonding/vehicle .
+
+docker image ls
+----
+
+.result
+----
+REPOSITORY                                TAG              IMAGE ID       CREATED             SIZE
+htl-leonding/vehicle                      latest           49b4b82d75fa   7 seconds ago       440MB
+----
+
+
+==== Start the Docker Container
+
+----
+docker run -i --rm -p 8080:8080 htl-leonding/vehicle
+----
+
+TIP: In the `Dockerfile.jvm` you find in the comments all commands
+
+.result
+[%collapsible]
+====
+----
+Starting the Java application using /opt/jboss/container/java/run/run-java.sh ...
+INFO exec  java -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:+ExitOnOutOfMemoryError -cp "." -jar /deployments/quarkus-run.jar
+__  ____  __  _____   ___  __ ____  ______
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/
+2023-04-29 11:54:21,899 INFO  [io.quarkus] (main) vehicle-demo 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.0.1.Final) started in 0.425s. Listening on: http://0.0.0.0:8080
+2023-04-29 11:54:21,917 INFO  [io.quarkus] (main) Profile prod activated.
+2023-04-29 11:54:21,917 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, smallrye-openapi, vertx]
+----
+====
+
+.Use the REST-client for checking if the app works.
+[%collapsible]
+====
+image::intellij-rest-client.png[]
+====
+
+=== Using Jib
+
+* There is a Library called https://github.com/GoogleContainerTools/jib[Jib^] (Java Image Builder) from Google which makes it possible to build a Docker image without installing Docker
+
+* Fortunately Quarkus has already implemented Jib
+
+==== Add Jib-Dependency to pom.xml
+
+----
+./mvnw quarkus:add-extension -Dextensions='container-image-jib'
+----
+
+==== Configure application.properties
+
+[source,properties]
+----
+quarkus.container-image.build=true  # <.>
+quarkus.container-image.group=htl-leonding
+quarkus.container-image.name=vehicle
+quarkus.container-image.tag=latest
+quarkus.jib.ports=8080
+----
+
+<.> this property is mandatory for building the docker image
+
+
+==== Compile App and Build Image
+
+----
+./mvnw clean package
+----
+
+.result
+[%collapsible]
+====
+----
+[INFO] Scanning for projects...
+[WARNING]
+[WARNING] Some problems were encountered while building the effective model for at.htlleonding.vehicle:vehicle-demo:jar:1.0.0-SNAPSHOT
+[WARNING] The expression ${version} is deprecated. Please use ${project.version} instead.
+[WARNING] The expression ${version} is deprecated. Please use ${project.version} instead.
+[WARNING]
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING]
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING]
+[INFO]
+[INFO] ----------------< at.htlleonding.vehicle:vehicle-demo >-----------------
+[INFO] Building vehicle-demo 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ vehicle-demo ---
+[INFO] Deleting /Users/stuetz/SynologyDrive/htl/skripten/themen/github/quarkus-docker-gh-actions-demo/labs/vehicle-demo/target
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ vehicle-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 2 resources
+[INFO]
+[INFO] --- quarkus-maven-plugin:3.0.1.Final:generate-code (default) @ vehicle-demo ---
+[INFO]
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ vehicle-demo ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 1 source file with javac [debug release 17] to target/classes
+[INFO]
+[INFO] --- quarkus-maven-plugin:3.0.1.Final:generate-code-tests (default) @ vehicle-demo ---
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ vehicle-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /Users/stuetz/SynologyDrive/htl/skripten/themen/github/quarkus-docker-gh-actions-demo/labs/vehicle-demo/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ vehicle-demo ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 2 source files with javac [debug release 17] to target/test-classes
+[INFO]
+[INFO] --- maven-surefire-plugin:3.0.0:test (default-test) @ vehicle-demo ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running at.htlleonding.vehicle.GreetingResourceTest
+2023-04-29 14:16:32,049 INFO  [io.quarkus] (main) vehicle-demo 1.0.0-SNAPSHOT on JVM (powered by Quarkus 3.0.1.Final) started in 1.041s. Listening on: http://localhost:8081
+2023-04-29 14:16:32,050 INFO  [io.quarkus] (main) Profile test activated.
+2023-04-29 14:16:32,051 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, smallrye-openapi, swagger-ui, vertx]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.703 s - in at.htlleonding.vehicle.GreetingResourceTest
+2023-04-29 14:16:32,713 INFO  [io.quarkus] (main) vehicle-demo stopped in 0.098s
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ vehicle-demo ---
+[INFO] Building jar: /Users/stuetz/SynologyDrive/htl/skripten/themen/github/quarkus-docker-gh-actions-demo/labs/vehicle-demo/target/vehicle-1.0.0-SNAPSHOT.jar
+[INFO]
+[INFO] --- quarkus-maven-plugin:3.0.1.Final:build (default) @ vehicle-demo ---
+[INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Starting (local) container image build for jar using jib.
+[INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Using docker to run the native image builder
+[WARNING] [io.quarkus.container.image.jib.deployment.JibProcessor] Base image 'registry.access.redhat.com/ubi8/openjdk-17-runtime:1.15' does not use a specific image digest - build may not be reproducible
+[INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Using base image with digest: sha256:f921cf1f9147e4b306908f3bcb61dd215b4a51970f8db560ede02ee6a492fa99
+[INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Container entrypoint set to [java, -Djava.util.logging.manager=org.jboss.logmanager.LogManager, -jar, quarkus-run.jar]
+[INFO] [io.quarkus.container.image.jib.deployment.JibProcessor] Created container image htl-leonding/vehicle (sha256:ea1f3d84df3221e0ce05527735b558bf410132712113a50f6a59064c7bcdaf1e)
+
+[INFO] [io.quarkus.deployment.QuarkusAugmentor] Quarkus augmentation completed in 5496ms
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.570 s
+[INFO] Finished at: 2023-04-29T14:16:38+02:00
+[INFO] ------------------------------------------------------------------------
+----
+====
+
+----
+docker image ls
+----
+
+----
+REPOSITORY                                          TAG              IMAGE ID       CREATED         SIZE
+htl-leonding/vehicle                                latest           de4acf85c454   4 minutes ago   382MB
+
+----
+
+==== Start the Docker Container
+
+----
+docker run --rm -p 8080:8080 htl-leonding/vehicle
+----
+
+.Use the REST-client for checking if the app works.
+[%collapsible]
+====
+image::intellij-rest-client.png[]
+====
+
+
+
+
+
+
+
+
+
+
+
 === Choose a Packaging Format
 
 * there are several aspects to pay attention:
 ** fast-jar or legacy-jar [https://www.heise.de/news/Java-Framework-Quarkus-1-12-erhebt-Fast-jar-zum-Standard-5064039.html[heise, window="_blank"]]
-** create a uber-jar or deliver the quarkus-app-folder
+** create an uber-jar or deliver the quarkus-app-folder
 
 
 * What is a uber-jar?
-** Über is the German word for above or over (it's actually cognate with the English over).
+** Über is the german word for above or over (it's actually cognate with the English over).
 Hence, in this context, an uber-jar is an "over-jar", one level up from a simple JAR (a), defined as one that contains both your package and all its dependencies in one single JAR file. The name can be thought to come from the same stable as ultrageek, superman, hyperspace, and metadata, which all have similar meanings of "beyond the normal".
 ** uber-jar is also known as fat jar i.e. jar with dependencies.
 There are three common methods for constructing an uber jar (https://stackoverflow.com/a/39030649[stackoverflow, window="_blank"]):
@@ -173,8 +417,11 @@ There are three common methods for constructing an uber jar (https://stackoverfl
 ** jar -> fast-jar
 ** legacy-jar
 ** uber-jar
+** mutable-jar -> remote development mode
 ** native
-* Where can you change the property?
+** native-sources
+
+* Which options do you have to change the property?
 ** application.properties
 +
 ----
@@ -196,8 +443,8 @@ quarkus.package.type=uber-jar
 
 .result
 ----
--rw-r--r--   1 stuetz  staff    14M Mar 14 12:35 vehicle-0.1.0-SNAPSHOT-runner.jar #<.>
--rw-r--r--   1 stuetz  staff   5.4K Mar 14 12:35 vehicle-0.1.0-SNAPSHOT.jar.original
+-rw-r--r--  1 stuetz  staff  38347130 Apr 29 12:13 vehicle-1.0.0-SNAPSHOT-runner.jar
+-rw-r--r--  1 stuetz  staff    180338 Apr 29 12:13 vehicle-1.0.0-SNAPSHOT.jar.original
 ----
 
 <.> the -runner - file includes all necessary libraries for running the quarkus app
@@ -212,7 +459,7 @@ java -jar ./target/vehicle-0.1.0-SNAPSHOT-runner.jar
 === Check the Running App manually
 
 ----
-curl http://localhost:8080/vehicle
+curl http://localhost:8080/hello
 ----
 
 .result
@@ -229,7 +476,7 @@ Hello RESTEasy
 
 [source,sh]
 ----
-docker build -f src/main/docker/Dockerfile.jvm -t htl-leonding/vehicle .
+docker build -f src/main/docker/Dockerfile.legacy-jar -t htl-leonding/vehicle .
 ----
 
 https://catalog.redhat.com/software/containers/search?p=1&q=ubi[Red Hat container images, window="_blank"]
