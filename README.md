@@ -1,61 +1,86 @@
-# quarkus-docker-gh-actions-demo project
+# Asciidoctor Github Pages Template
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+## Converting
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+![](./img/conver_strategy.jpg)
 
-## Running the application in dev mode
+1. will be converted into asciidoc format
+2. will be converted into asciidocs slides
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+## Action
+
+GitHub Actions will automatically convert the `.adoc` files into html document. You can configure the input and 
+output path with the environmental variables at the top of the actions.
+
+> Note: This will not change the configuration for the scripts
+
+```yaml
+jobs:
+  build:
+    name: Build & Publish 🚀
+    runs-on: ubuntu-latest
+    env:
+      INPUTPATH: docs
+      OUTPUTPATH: dist
+      SLIDES: true
+      BRANCH: gh-pages
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+|              | INPUTPATH | OUTPUTPATH | SLIDES         | BRANCH  |
+|--------------|-----------|------------|----------------|---------|
+| type         | string    | string     | boolean        | string  |
 
-## Packaging and running the application
+## Directory Trigger
 
-The application can be packaged using:
-```shell script
-./mvnw package
-```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+After changing the input path make sure to also change the directory trigger at the top of the file.
 
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
-```
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Pnative
+```yaml
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - docs/**
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Pnative -Dquarkus.native.container-build=true
+Just change docs to the prefered input directory.
+
+## Scripts
+
+Sometimes it is useful to just convert or push it locally for a quick update. In the root directory are two scripts
+
+### Convert
+
+This script will just convert it into the ouput directory. See table below for the parameters..
+
+```shell
+./convert.sh <input-dir> <output-dir> <slides-convert>
 ```
 
-You can then execute your native executable with: `./target/quarkus-docker-gh-actions-demo-1.0.0-SNAPSHOT-runner`
+### Publish
+This script will convert the documents and publish them to the gh-pages branch. See table below for the parameters.
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html.
+```shell
+./publish.sh <input-dir> <output-dir> <slides-convert>
+```
 
-## Related guides
+### Config
 
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplify your persistence code for Hibernate ORM via the active record or the repository pattern
-- SmallRye OpenAPI ([guide](https://quarkus.io/guides/openapi-swaggerui)): Document your REST APIs with OpenAPI - comes with Swagger UI
-- RESTEasy JSON-B ([guide](https://quarkus.io/guides/rest-json)): JSON-B serialization support for RESTEasy
-- RESTEasy JAX-RS ([guide](https://quarkus.io/guides/rest-json)): REST endpoint framework implementing JAX-RS and more
+You can configure the inut and output dir in the `config.sh` file. 
 
-## Provided examples
+|              | input-dir | output-dir | slides-convert |
+|--------------|-----------|------------|----------------|
+| isOptional   | true      | true       | true           |
+| defaultValue | input     | output     | true           |
+| type         | string    | string     | boolean        |
 
-### RESTEasy JAX-RS example
 
-REST is easy peasy with this Hello World RESTEasy resource.
+## Config github repo
 
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+![permissions-for-asciidoc.png](img%2Fpermissions-for-asciidoc.png)
+
+![permissions-for-asciidoc.png](img%2Fpermissions-for-asciidoc-2.png)
+
+
+
+

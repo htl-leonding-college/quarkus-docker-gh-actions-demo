@@ -1,6 +1,6 @@
 = Tutorial: Quarkus App with Docker
 Thomas W. Stütz
-1.0.0, 2021-03-14: How to use ssh in project work @ HTL Leonding college
+2.0.0, 2023-04-29: How to use ssh in project work @ HTL Leonding college
 ifndef::imagesdir[:imagesdir: images]
 //:toc-placement!:  // prevents the generation of the doc at this position, so it can be printed afterwards
 :sourcedir: ../src/main/java
