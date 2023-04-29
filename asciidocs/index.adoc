@@ -648,9 +648,14 @@ public class VehicleResourceTest {
 ----
 ====
 
+=== Build the docker image
 
 
+----
+./mvnw clean package -DskipTests -Dquarkus.container-image.build=true
+----
 
+* Because the ide is running on linux/arm64/v8 - architecture, we have to tell jib to create an linux/amd64 image -> `-Dquarkus.container-image.build=true`
 
 
 
