@@ -600,6 +600,8 @@ pre.rouge .hll * {
 <li><a href="#_add_dependencies_for_the_database">4.1. Add Dependencies for the database</a></li>
 <li><a href="#_add_code_for_accessing_database">4.2. Add code for accessing database</a></li>
 <li><a href="#_build_the_docker_image">4.3. Build the docker image</a></li>
+<li><a href="#_create_the_docker_compose_yaml_for_development">4.4. Create the docker-compose.yaml for development</a></li>
+<li><a href="#_create_the_docker_compose_yaml_for_production">4.5. Create the docker-compose.yaml for production</a></li>
 </ul>
 </li>
 </ul>
@@ -1425,6 +1427,40 @@ GET http://localhost:8080/vehicle
 </div>
 </div>
 </details>
+<details>
+<summary class="title">src/main/resources/application.properties</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="properties"><span class="c"># datasource configuration
+</span><span class="py">quarkus.datasource.db-kind</span> <span class="p">=</span> <span class="s">postgresql</span>
+<span class="py">quarkus.datasource.username</span> <span class="p">=</span> <span class="s">app</span>
+<span class="py">quarkus.datasource.password</span> <span class="p">=</span> <span class="s">app</span>
+<span class="py">quarkus.datasource.jdbc.url</span> <span class="p">=</span> <span class="s">jdbc:postgresql://localhost:5432/db</span>
+
+<span class="c"># drop and create the database at startup (use `update` to only update the schema)
+</span><span class="py">quarkus.hibernate-orm.database.generation</span><span class="p">=</span><span class="s">drop-and-create</span>
+<span class="err">%</span><span class="py">prod.quarkus.hibernate-orm.sql-load-script</span><span class="p">=</span><span class="s">import.sql </span><i class="conum" data-value="1"></i><b>(1)</b>
+
+<span class="c">#quarkus.package.type=uber-jar
+</span>
+<span class="py">quarkus.container-image.build</span><span class="p">=</span><span class="s">true</span>
+<span class="py">quarkus.container-image.group</span><span class="p">=</span><span class="s">htl-leonding</span>
+<span class="py">quarkus.container-image.name</span><span class="p">=</span><span class="s">vehicle</span>
+<span class="py">quarkus.container-image.tag</span><span class="p">=</span><span class="s">latest</span>
+<span class="py">quarkus.jib.ports</span><span class="p">=</span><span class="s">8080</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>For importing data in prod-profile</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_build_the_docker_image"><a class="anchor" href="#_build_the_docker_image"></a>4.3. Build the docker image</h3>
@@ -1441,13 +1477,176 @@ GET http://localhost:8080/vehicle
 </ul>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_create_the_docker_compose_yaml_for_development"><a class="anchor" href="#_create_the_docker_compose_yaml_for_development"></a>4.4. Create the docker-compose.yaml for development</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>For starting only the database and pgadmin.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>You could also use dev-services for starting a database.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>The quarkus-app ist startet in dev-mode w/o docker.</p>
+</li>
+</ul>
+</div>
+<details>
+<summary class="title">docker-compose-postgres.yaml</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yaml"><span class="na">services</span><span class="pi">:</span>
+
+  <span class="na">db</span><span class="pi">:</span>
+    <span class="na">container_name</span><span class="pi">:</span> <span class="s">postgres</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">postgres:15.2-alpine</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">POSTGRES_USER</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">POSTGRES_PASSWORD</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">POSTGRES_DB</span><span class="pi">:</span> <span class="s">db</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">5432:5432</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/db:/var/lib/postgresql/data</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/import:/import</span>
+    <span class="na">networks</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">postgres</span>
+
+<span class="c1">#  adminer:</span>
+<span class="c1">#    image: adminer</span>
+<span class="c1">#    restart: always</span>
+<span class="c1">#    ports:</span>
+<span class="c1">#      - 8090:8080</span>
+
+<span class="c1"># https://github.com/khezen/compose-postgres/blob/master/docker-compose.yml</span>
+  <span class="na">pgadmin</span><span class="pi">:</span>
+    <span class="na">container_name</span><span class="pi">:</span> <span class="s">pgadmin</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">dpage/pgadmin4:7.0</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">PGADMIN_DEFAULT_EMAIL</span><span class="pi">:</span> <span class="s">${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}</span>
+      <span class="na">PGADMIN_DEFAULT_PASSWORD</span><span class="pi">:</span> <span class="s">${PGADMIN_DEFAULT_PASSWORD:-admin}</span>
+      <span class="na">PGADMIN_CONFIG_SERVER_MODE</span><span class="pi">:</span> <span class="s1">'</span><span class="s">False'</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/pgadmin:/root/.pgadmin</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">8090:80</span>
+    <span class="na">networks</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">postgres</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+
+<span class="na">networks</span><span class="pi">:</span>
+  <span class="na">postgres</span><span class="pi">:</span>
+    <span class="na">driver</span><span class="pi">:</span> <span class="s">bridge</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="listingblock">
+<div class="title">start</div>
+<div class="content">
+<pre>docker compose -f docker-compose-postgres.yaml up -d</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">stop</div>
+<div class="content">
+<pre>docker compose -f docker-compose-postgres.yaml down</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_create_the_docker_compose_yaml_for_production"><a class="anchor" href="#_create_the_docker_compose_yaml_for_production"></a>4.5. Create the docker-compose.yaml for production</h3>
+<div class="listingblock">
+<div class="title">docker-compose-all-services.yaml</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yaml"><span class="na">services</span><span class="pi">:</span>
+
+  <span class="na">db</span><span class="pi">:</span>
+    <span class="na">container_name</span><span class="pi">:</span> <span class="s">postgres</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">postgres:15.2-alpine</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">POSTGRES_USER</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">POSTGRES_PASSWORD</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">POSTGRES_DB</span><span class="pi">:</span> <span class="s">db</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">5432:5432</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/db:/var/lib/postgresql/data</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/import:/import</span>
+    <span class="na">networks</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">vehicle</span>
+
+<span class="c1">#  adminer:</span>
+<span class="c1">#    image: adminer</span>
+<span class="c1">#    restart: always</span>
+<span class="c1">#    ports:</span>
+<span class="c1">#      - 8090:8080</span>
+
+<span class="c1"># https://github.com/khezen/compose-postgres/blob/master/docker-compose.yml</span>
+  <span class="na">pgadmin</span><span class="pi">:</span>
+    <span class="na">container_name</span><span class="pi">:</span> <span class="s">pgadmin</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">dpage/pgadmin4:7.0</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">PGADMIN_DEFAULT_EMAIL</span><span class="pi">:</span> <span class="s">${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}</span>
+      <span class="na">PGADMIN_DEFAULT_PASSWORD</span><span class="pi">:</span> <span class="s">${PGADMIN_DEFAULT_PASSWORD:-admin}</span>
+      <span class="na">PGADMIN_CONFIG_SERVER_MODE</span><span class="pi">:</span> <span class="s1">'</span><span class="s">False'</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./db-postgres/pgadmin:/root/.pgadmin</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">8090:80</span>
+    <span class="na">networks</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">vehicle</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+
+  <span class="na">backend</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">htl-leonding/vehicle:latest</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">QUARKUS_DATASOURCE_JDBC_URL</span><span class="pi">:</span> <span class="s">jdbc:postgresql://db:5432/db</span>
+      <span class="na">QUARKUS_DATASOURCE_USERNAME</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">QUARKUS_DATASOURCE_PASSWORD</span><span class="pi">:</span> <span class="s">app</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">8080:8080"</span>
+    <span class="na">depends_on</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">db</span>
+    <span class="na">networks</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">vehicle</span>
+
+
+<span class="na">networks</span><span class="pi">:</span>
+  <span class="na">vehicle</span><span class="pi">:</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">quarkus-vehicle-network</span>
+    <span class="na">driver</span><span class="pi">:</span> <span class="s">bridge</span></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">start</div>
+<div class="content">
+<pre>docker compose -f docker-compose-all-services.yaml up -d</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">stop</div>
+<div class="content">
+<pre>docker compose -f docker-compose-all-services.yaml down</pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0<br>
-Last updated 2023-04-29 16:18:12 UTC
+Last updated 2023-04-29 17:03:23 UTC
 </div>
 </div>
 </body>
