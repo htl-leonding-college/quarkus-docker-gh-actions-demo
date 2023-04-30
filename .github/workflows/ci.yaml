@@ -13,6 +13,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   PROJECT_NAME: vehicle
+  PROJECT_VERSION: latest
 
 jobs:
   build:
@@ -28,6 +29,14 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Debug
+        run: |
+          echo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          echo ${{ env.REGISTRY }}
+          echo ${{ github.actor }}
+          echo ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}
+          echo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
@@ -38,6 +47,6 @@ jobs:
       - name: Build
         run: |
           ./mvnw package -DskipTests -B
-          docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}
+          docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}
 
 
