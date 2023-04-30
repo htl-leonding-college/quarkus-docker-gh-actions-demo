@@ -17,8 +17,12 @@ env:
   ORG_ACTOR: htl-lleonding-college
 
 jobs:
-  build:
+  build-and-push-image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout gh-repo
         uses: actions/checkout@v3
@@ -32,22 +36,22 @@ jobs:
 
       - name: Debug
         run: |
-          echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          echo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
           echo ${{ env.REGISTRY }}
-          echo ${{ env.org_actor }}
+          echo ${{ github.actor }}
           echo ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}
-          echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          echo ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ env.org_actor }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: |
           ./mvnw package -DskipTests -B
-          docker push ${{ env.REGISTRY }}/${{ env.org_actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}
 
 
