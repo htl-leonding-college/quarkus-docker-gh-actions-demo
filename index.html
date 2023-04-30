@@ -604,6 +604,12 @@ pre.rouge .hll * {
 <li><a href="#_create_the_docker_compose_yaml_for_production">4.5. Create the docker-compose.yaml for production</a></li>
 </ul>
 </li>
+<li><a href="#_ci_deploy_to_github_packages">5. CI - Deploy to github-packages</a>
+<ul class="sectlevel2">
+<li><a href="#_create_a_basic_pipeline">5.1. Create a basic pipeline</a></li>
+</ul>
+</li>
+<li><a href="#_publishing_to_gh_packages">6. Publishing to gh-packages</a></li>
 </ul>
 </div>
 </div>
@@ -864,6 +870,9 @@ target/quarkus-app
 </li>
 <li>
 <p>Using a library (i.e. jib) to build an image</p>
+</li>
+<li>
+<p>&#8230;&#8203;</p>
 </li>
 </ul>
 </div>
@@ -1584,12 +1593,6 @@ GET http://localhost:8080/vehicle
     <span class="na">networks</span><span class="pi">:</span>
       <span class="pi">-</span> <span class="s">vehicle</span>
 
-<span class="c1">#  adminer:</span>
-<span class="c1">#    image: adminer</span>
-<span class="c1">#    restart: always</span>
-<span class="c1">#    ports:</span>
-<span class="c1">#      - 8090:8080</span>
-
 <span class="c1"># https://github.com/khezen/compose-postgres/blob/master/docker-compose.yml</span>
   <span class="na">pgadmin</span><span class="pi">:</span>
     <span class="na">container_name</span><span class="pi">:</span> <span class="s">pgadmin</span>
@@ -1642,11 +1645,226 @@ GET http://localhost:8080/vehicle
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_ci_deploy_to_github_packages"><a class="anchor" href="#_ci_deploy_to_github_packages"></a>5. CI - Deploy to github-packages</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>sources:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/features" class="bare">https://github.com/features</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/learn-github-actions" class="bare">https://docs.github.com/en/actions/learn-github-actions</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions" class="bare">https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/automating-builds-and-tests" class="bare">https://docs.github.com/en/actions/automating-builds-and-tests</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven" class="bare">https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/publishing-packages" class="bare">https://docs.github.com/en/actions/publishing-packages</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions" class="bare">https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions</a></p>
+</li>
+<li>
+<p><a href="https://docs.github.com/en/actions/using-workflows" target="_blank" rel="noopener">Using workflows</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_create_a_basic_pipeline"><a class="anchor" href="#_create_a_basic_pipeline"></a>5.1. Create a basic pipeline</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>When you create a quarkus-project with a jib-dependency, you get a sample <code>ci.yml</code>.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yaml"><span class="c1">## A basic GitHub Actions workflow for your Quarkus application.</span>
+
+<span class="na">name</span><span class="pi">:</span> <span class="s">CI build</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">main</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">main</span> <span class="pi">]</span>
+  <span class="na">workflow_dispatch</span><span class="pi">:</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Checkout gh-repo</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="m">17</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s">temurin</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">./mvnw package -B</span>
+          <span class="s">docker image ls</span></code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>After pushing this file, the first error occurs</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-workflow-001-error.png" alt="gh workflow 001 error">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-workflow-002-error-missing-database.png" alt="gh workflow 002 error missing database">
+</div>
+<div class="title">Figure 1. database-service is missing</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>we could skip tests, or</p>
+</li>
+<li>
+<p>we use testcontainers</p>
+<div class="ulist">
+<ul>
+<li>
+<p>so we configure quarkus to use testcontainers in test-profile</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="title">application.properties</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="properties"><span class="c"># datasource configuration
+</span><span class="err">%</span><span class="py">dev.quarkus.datasource.db-kind</span> <span class="p">=</span> <span class="s">postgresql  </span><i class="conum" data-value="1"></i><b>(1)</b>
+<span class="err">%</span><span class="py">dev.quarkus.datasource.username</span> <span class="p">=</span> <span class="s">app</span>
+<span class="err">%</span><span class="py">dev.quarkus.datasource.password</span> <span class="p">=</span> <span class="s">app</span>
+<span class="err">%</span><span class="py">dev.quarkus.datasource.jdbc.url</span> <span class="p">=</span> <span class="s">jdbc:postgresql://localhost:5432/db</span>
+
+<span class="err">%</span><span class="py">prod.quarkus.datasource.db-kind</span> <span class="p">=</span> <span class="s">postgresql  </span><i class="conum" data-value="2"></i><b>(2)</b>
+<span class="err">%</span><span class="py">prod.quarkus.datasource.username</span> <span class="p">=</span> <span class="s">app</span>
+<span class="err">%</span><span class="py">prod.quarkus.datasource.password</span> <span class="p">=</span> <span class="s">app</span>
+<span class="err">%</span><span class="py">prod.quarkus.datasource.jdbc.url</span> <span class="p">=</span> <span class="s">jdbc:postgresql://localhost:5432/db</span>
+
+<span class="c"># drop and create the database at startup (use `update` to only update the schema)
+</span><span class="py">quarkus.hibernate-orm.database.generation</span><span class="p">=</span><span class="s">drop-and-create</span>
+<span class="err">%</span><span class="py">prod.quarkus.hibernate-orm.sql-load-script</span><span class="p">=</span><span class="s">import.sql</span>
+
+<span class="c">#quarkus.package.type=uber-jar
+</span>
+<span class="py">quarkus.container-image.build</span><span class="p">=</span><span class="s">true</span>
+<span class="py">quarkus.container-image.group</span><span class="p">=</span><span class="s">htl-leonding</span>
+<span class="py">quarkus.container-image.name</span><span class="p">=</span><span class="s">vehicle</span>
+<span class="py">quarkus.container-image.tag</span><span class="p">=</span><span class="s">latest</span>
+<span class="py">quarkus.jib.ports</span><span class="p">=</span><span class="s">8080</span>
+
+<span class="err">%</span><span class="py">test.quarkus.datasource.devservices.enabled</span><span class="p">=</span><span class="s">true </span><i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>for dev-profile use local docker-compose-database-service</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>for prod-profile use local docker-compose-database-service</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>activate devservices for databases - because we provide only db-credentials for test- and prod-profile, in test-profile we use a postgres-testcontainer</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-workflow-003-success.png" alt="gh workflow 003 success">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-workflow-004-docker-images.png" alt="gh workflow 004 docker images">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>You see, the docker image is built, we can continue to publish this docker image into gh-packages</p>
+</li>
+<li>
+<p>Because using the testcontainer is consuming a lot of github-resources (you normally have to pay), so we will skip tests, while developing the pipeline.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_publishing_to_gh_packages"><a class="anchor" href="#_publishing_to_gh_packages"></a>6. Publishing to gh-packages</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>source: <a href="https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions" target="_blank" rel="noopener">Publishing and installing a package with GitHub Actions</a></p>
+</li>
+</ul>
+</div>
+<div class="quoteblock">
+<blockquote>
+You can use a GITHUB_TOKEN in a GitHub Actions workflow to delete or restore a package using the REST API, if the token has <code>admin</code> permission to the package. Repositories that publish packages using a workflow, and repositories that you have explicitly connected to packages, are automatically granted <code>admin</code> permission to packages in the repository.
+</blockquote>
+<div class="attribution">
+&#8212; github-docs
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>github provides a token to authenticate (<a href="https://docs.github.com/en/actions/security-guides/automatic-token-authentication" target="_blank" rel="noopener">Automatic token authentication</a>)</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-token-001.png" alt="gh token 001">
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0<br>
-Last updated 2023-04-29 17:03:23 UTC
+Last updated 2023-04-30 07:32:41 UTC
 </div>
 </div>
 </body>
