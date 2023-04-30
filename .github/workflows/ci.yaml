@@ -12,6 +12,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  PROJECT_NAME: vehicle
 
 jobs:
   build:
@@ -36,7 +37,7 @@ jobs:
 
       - name: Build
         run: |
-          ./mvnw deploy -DskipTests -B
-          docker image ls
+          ./mvnw package -DskipTests -B
+          docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}
 
 
