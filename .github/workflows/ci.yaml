@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   PROJECT_NAME: vehicle
   PROJECT_VERSION: latest
-  ORG_ACTOR: htl-lleonding-college
+  ORG_ACTOR: htl-leonding-college
 
 jobs:
   build-and-push-image:
@@ -31,10 +31,18 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.MY_GITHUB_TOKEN }}
+
+
       - name: Build
-        run: |
-          ./mvnw package -DskipTests -B
-          docker login -u ${{ github.actor }} -p ${{ secrets.MY_GITHUB_TOKEN }} ${{ env.REGISTRY }}
-          docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}
+        run: ./mvnw package -DskipTests -B
+
+      - name: Push to packages
+        run: docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}
 
 
