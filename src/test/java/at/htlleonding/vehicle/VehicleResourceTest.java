@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class VehicleResourceTest {
 
     @Test
-    public void testHelloEndpoint() {
+    public void testVehicleEndpoint() {
 
         List<VehicleDto> expectedVehicles = List.of(
                 new VehicleDto(2L, "VW", "Käfer"),
