@@ -180,6 +180,7 @@ java -jar target/quarkus-app/quarkus-run.jar
 * To dockerize the quarkus application into a docker image, there are several options available:
 ** Usage of a Dockerfile
 ** Using a library (i.e. jib) to build an image
+** ...
 
 === Using a Dockerfile
 
@@ -776,12 +777,6 @@ services:
     networks:
       - vehicle
 
-#  adminer:
-#    image: adminer
-#    restart: always
-#    ports:
-#      - 8090:8080
-
 # https://github.com/khezen/compose-postgres/blob/master/docker-compose.yml
   pgadmin:
     container_name: pgadmin
@@ -829,6 +824,208 @@ docker compose -f docker-compose-all-services.yaml up -d
 ----
 docker compose -f docker-compose-all-services.yaml down
 ----
+
+
+== CI - Deploy to github-packages
+
+* sources:
+** https://github.com/features
+** https://docs.github.com/en/actions/learn-github-actions
+** https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
+** https://docs.github.com/en/actions/automating-builds-and-tests
+** https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+** https://docs.github.com/en/actions/publishing-packages
+** https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions
+** https://docs.github.com/en/actions/using-workflows[Using workflows^]
+
+
+
+
+
+=== Create a basic pipeline
+
+* When you create a quarkus-project with a jib-dependency, you get a sample `ci.yml`.
+
+[source,yaml]
+----
+## A basic GitHub Actions workflow for your Quarkus application.
+
+name: CI build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-repo
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+
+      - name: Build
+        run: |
+          ./mvnw package -B
+          docker image ls
+----
+
+* After pushing this file, the first error occurs
+
+image::gh-workflow-001-error.png[]
+
+.database-service is missing
+image::gh-workflow-002-error-missing-database.png[]
+
+* we could skip tests, or
+* we use testcontainers
+** so we configure quarkus to use testcontainers in test-profile
+
+.application.properties
+[source,properties]
+----
+# datasource configuration
+%dev.quarkus.datasource.db-kind = postgresql  # <.>
+%dev.quarkus.datasource.username = app
+%dev.quarkus.datasource.password = app
+%dev.quarkus.datasource.jdbc.url = jdbc:postgresql://localhost:5432/db
+
+%prod.quarkus.datasource.db-kind = postgresql  # <.>
+%prod.quarkus.datasource.username = app
+%prod.quarkus.datasource.password = app
+%prod.quarkus.datasource.jdbc.url = jdbc:postgresql://localhost:5432/db
+
+# drop and create the database at startup (use `update` to only update the schema)
+quarkus.hibernate-orm.database.generation=drop-and-create
+%prod.quarkus.hibernate-orm.sql-load-script=import.sql
+
+#quarkus.package.type=uber-jar
+
+quarkus.container-image.build=true
+quarkus.container-image.group=htl-leonding
+quarkus.container-image.name=vehicle
+quarkus.container-image.tag=latest
+quarkus.jib.ports=8080
+
+%test.quarkus.datasource.devservices.enabled=true # <.>
+----
+
+<.> for dev-profile use local docker-compose-database-service
+<.> for prod-profile use local docker-compose-database-service
+<.> activate devservices for databases - because we provide only db-credentials for test- and prod-profile, in test-profile we use a postgres-testcontainer
+
+
+image::gh-workflow-003-success.png[]
+
+
+image::gh-workflow-004-docker-images.png[]
+
+* You see, the docker image is built, we can continue to publish this docker image into gh-packages
+
+* Because using the testcontainer is consuming a lot of github-resources (you normally have to pay), so we will skip tests, while developing the pipeline.
+
+== Publishing to gh-packages
+
+* source: https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions[Publishing and installing a package with GitHub Actions^]
+
+"You can use a GITHUB_TOKEN in a GitHub Actions workflow to delete or restore a package using the REST API, if the token has `admin` permission to the package. Repositories that publish packages using a workflow, and repositories that you have explicitly connected to packages, are automatically granted `admin` permission to packages in the repository."
+-- github-docs
+
+
+* github provides a token to authenticate (https://docs.github.com/en/actions/security-guides/automatic-token-authentication[Automatic token authentication^])
+
+image::gh-token-001.png[]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
