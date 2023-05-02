@@ -571,7 +571,7 @@ GET http://localhost:8080/vehicle
 ====
 
 
-.src/main/resources/application.properties
+.src/main/resources/insert.sql
 [%collapsible]
 ====
 [source,sql]
