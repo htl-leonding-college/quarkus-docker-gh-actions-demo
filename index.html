@@ -609,7 +609,11 @@ pre.rouge .hll * {
 <li><a href="#_create_a_basic_pipeline">5.1. Create a basic pipeline</a></li>
 </ul>
 </li>
-<li><a href="#_publishing_to_gh_packages">6. Publishing to gh-packages</a></li>
+<li><a href="#_publishing_to_gh_packages">6. Publishing to gh-packages</a>
+<ul class="sectlevel2">
+<li><a href="#_make_package_public">6.1. Make package public</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -1782,6 +1786,7 @@ GET http://localhost:8080/vehicle
 </span>
 <span class="py">quarkus.container-image.build</span><span class="p">=</span><span class="s">true</span>
 <span class="py">quarkus.container-image.group</span><span class="p">=</span><span class="s">htl-leonding</span>
+<span class="py">quarkus.container-image.registry</span><span class="p">=</span><span class="s">ghcr.io</span>
 <span class="py">quarkus.container-image.name</span><span class="p">=</span><span class="s">vehicle</span>
 <span class="py">quarkus.container-image.tag</span><span class="p">=</span><span class="s">latest</span>
 <span class="py">quarkus.jib.ports</span><span class="p">=</span><span class="s">8080</span>
@@ -1858,13 +1863,138 @@ You can use a GITHUB_TOKEN in a GitHub Actions workflow to delete or restore a p
 <img src="images/gh-token-001.png" alt="gh token 001">
 </div>
 </div>
+<div class="listingblock">
+<div class="title">.github/workflows/ci.yaml</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yaml"><span class="na">name</span><span class="pi">:</span> <span class="s">CI build</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">main</span> <span class="pi">]</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> <span class="pi">[</span> <span class="nv">main</span> <span class="pi">]</span>
+  <span class="na">workflow_dispatch</span><span class="pi">:</span>
+
+<span class="na">env</span><span class="pi">:</span>
+  <span class="na">REGISTRY</span><span class="pi">:</span> <span class="s">ghcr.io</span>
+  <span class="na">IMAGE_NAME</span><span class="pi">:</span> <span class="s">${{ github.repository }}</span>
+  <span class="na">PROJECT_NAME</span><span class="pi">:</span> <span class="s">vehicle</span>
+  <span class="na">PROJECT_VERSION</span><span class="pi">:</span> <span class="s">latest</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build-and-push-image</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Checkout gh-repo</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Set up JDK </span><span class="m">17</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="m">17</span>
+          <span class="na">distribution</span><span class="pi">:</span> <span class="s">temurin</span>
+          <span class="na">cache</span><span class="pi">:</span> <span class="s">maven</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Log in to the Container registry</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">registry</span><span class="pi">:</span> <span class="s">${{ env.REGISTRY }}</span>
+          <span class="na">username</span><span class="pi">:</span> <span class="s">${{ github.actor }}</span>
+          <span class="na">password</span><span class="pi">:</span> <span class="s">${{ secrets.MY_GITHUB_TOKEN }}</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">./mvnw package -DskipTests -B</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Push to packages</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">docker push ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.PROJECT_NAME }}:${{ env.PROJECT_VERSION }}</span></code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>in the first attempt when using the provided <code>${{ secrets.GITHUB_TOKEN }}</code> did not work:</p>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-workflow-005-access-denied.png" alt="gh workflow 005 access denied">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>So in the repository a token with package-read-permission was created</p>
+</li>
+<li>
+<p>A repository-scoped secret was created with this token &#8594; ${{ secrets.MY_GITHUB_TOKEN }}</p>
+</li>
+<li>
+<p>Now it worked</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Maybe this happened, because the repository was located in a github-organization</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Instead of the Docker-login-action you could login with</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>docker login -u ${{ github.actor }} -p ${{ secrets.MY_GITHUB_TOKEN }} ${{ env.REGISTRY }}</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the <strong>Build</strong>-Step you can omit <code>-DskipTests</code></p>
+</li>
+<li>
+<p>Instead of <code>docker push &#8230;&#8203;</code> it would be possible to use <code>mvn install</code> - but in this case you have to supply the registry to the <code>pom-file</code>.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_make_package_public"><a class="anchor" href="#_make_package_public"></a>6.1. Make package public</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>To access the registry &#8594; <code><a href="https://github.com/&lt;your_user_name&gt;?tab=packages" class="bare">https://github.com/&lt;your_user_name&gt;?tab=packages</a></code></p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-packages-001.png" alt="gh packages 001">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-packages-002.png" alt="gh packages 002">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-packages-003.png" alt="gh packages 003">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-packages-004.png" alt="gh packages 004">
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0<br>
-Last updated 2023-04-30 07:32:41 UTC
+Last updated 2023-05-03 07:44:06 UTC
 </div>
 </div>
 </body>
