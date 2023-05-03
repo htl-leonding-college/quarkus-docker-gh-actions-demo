@@ -51,7 +51,7 @@ mvn io.quarkus.platform:quarkus-maven-plugin:3.0.1.Final:create \
 ./mvnw clean quarkus:dev
 ----
 
-=== Manually Check of the Running Project
+=== Manual Check of the Running Project
 
 ==== Curl
 
@@ -571,7 +571,7 @@ GET http://localhost:8080/vehicle
 ====
 
 
-.src/main/resources/application.properties
+.src/main/resources/insert.sql
 [%collapsible]
 ====
 [source,sql]
