@@ -14,7 +14,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   PROJECT_NAME: vehicle
   PROJECT_VERSION: latest
-  ORG_ACTOR: htl-leonding-college
 
 jobs:
   build-and-push-image:
