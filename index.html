@@ -610,8 +610,9 @@ pre.rouge .hll * {
 </ul>
 </li>
 <li><a href="#_publishing_to_gh_packages">6. Publishing to gh-packages</a>
-<ul class="sectlevel2">
-<li><a href="#_make_package_public">6.1. Make package public</a></li>
+<ul class="sectlevel3">
+<li><a href="#_configure_permissions_of_github_token">6.1. Configure permissions of GITHUB_TOKEN</a></li>
+<li><a href="#_make_package_public">6.2. Make package public</a></li>
 </ul>
 </li>
 </ul>
@@ -635,7 +636,7 @@ pre.rouge .hll * {
 <div class="ulist">
 <ul>
 <li>
-<p>Configure on <a href="https://code.quarkus.io/?g=ast.htlleonding.vehicle&amp;a=vehicle-demo&amp;e=resteasy-reactive&amp;e=resteasy-reactive-jackson&amp;e=smallrye-openapi&amp;extension-search=origin:platform%20panache" target="_blank" rel="noopener">quarkus.io</a> and download as zip or push to github</p>
+<p>Configure on <a href="https://code.quarkus.io/?g=at.htlleonding.vehicle&amp;a=vehicle-demo&amp;e=resteasy-reactive&amp;e=resteasy-reactive-jackson&amp;e=smallrye-openapi&amp;extension-search=origin:platform%20panache" target="_blank" rel="noopener">quarkus.io</a> and download as zip or push to github</p>
 </li>
 <li>
 <p>Alternatively create the project per maven</p>
@@ -1958,8 +1959,40 @@ You can use a GITHUB_TOKEN in a GitHub Actions workflow to delete or restore a p
 </li>
 </ul>
 </div>
+<div class="sect3">
+<h4 id="_configure_permissions_of_github_token"><a class="anchor" href="#_configure_permissions_of_github_token"></a>6.1. Configure permissions of GITHUB_TOKEN</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>As in <a href="https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions" target="_blank" rel="noopener">GitHub Docs</a> explained, it is possible to modify the default permissions granted to the GITHUB_TOKEN</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+This is maybe the better way than creating a new token (MY_GITHUB_TOKEN)
+</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-token-permissions-1.png" alt="gh token permissions 1">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/gh-token-permissions-2.png" alt="gh token permissions 2">
+</div>
+</div>
+</div>
 <div class="sect2">
-<h3 id="_make_package_public"><a class="anchor" href="#_make_package_public"></a>6.1. Make package public</h3>
+<h3 id="_make_package_public"><a class="anchor" href="#_make_package_public"></a>6.2. Make package public</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -1994,7 +2027,7 @@ You can use a GITHUB_TOKEN in a GitHub Actions workflow to delete or restore a p
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0<br>
-Last updated 2023-05-03 07:49:26 UTC
+Last updated 2023-05-07 09:09:21 UTC
 </div>
 </div>
 </body>
