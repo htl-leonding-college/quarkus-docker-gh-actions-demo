@@ -27,7 +27,7 @@ endif::backend-html5[]
 
 === Create the Project
 
-* Configure on https://code.quarkus.io/?g=ast.htlleonding.vehicle&a=vehicle-demo&e=resteasy-reactive&e=resteasy-reactive-jackson&e=smallrye-openapi&extension-search=origin:platform%20panache[quarkus.io^] and download as zip or push to github
+* Configure on https://code.quarkus.io/?g=at.htlleonding.vehicle&a=vehicle-demo&e=resteasy-reactive&e=resteasy-reactive-jackson&e=smallrye-openapi&extension-search=origin:platform%20panache[quarkus.io^] and download as zip or push to github
 
 * Alternatively create the project per maven
 
@@ -1008,6 +1008,16 @@ image::gh-workflow-005-access-denied.png[]
 * In the *Build*-Step you can omit `-DskipTests`
 
 * Instead of `docker push ...` it would be possible to use `mvn install` - but in this case you have to supply the registry to the `pom-file`.
+
+
+==== Configure permissions of GITHUB_TOKEN
+
+* As in https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions[GitHub Docs^] explained, it is possible to modify the default permissions granted to the GITHUB_TOKEN
+
+TIP: This is maybe the better way than creating a new token (MY_GITHUB_TOKEN)
+
+image::gh-token-permissions-1.png[]
+image::gh-token-permissions-2.png[]
 
 
 
